@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\Common\PostSearchController;
 use App\Http\Controllers\Admin\Common\PrayertimeNotificationController;
 use App\Http\Controllers\BackupController;
 
+use App\Http\Controllers\Admin\Common\AudioFileController;
 use App\Http\Controllers\Admin\Common\NotificationController;
 
 Route::get('/send-test-notification', [NotificationController::class, 'sendTestNotification']);
@@ -132,6 +133,11 @@ Route::middleware(['auth', 'role:admin,editor'])->prefix('admin')->name('admin.'
     Route::get('/upload-audio', [DashboardController::class, 'uploadAudiopage'])->name('uploadAudioPage');
     Route::post('/uploadAudio', [DashboardController::class, 'uploadAudio'])->name('uploadAudio');
     Route::delete('/delete-audio', [DashboardController::class, 'deleteAudio'])->name('deleteAudio');
+
+    // Tracked Audio Routes
+    Route::get('/audio-manage', [AudioFileController::class, 'index'])->name('audio.manage');
+    Route::post('/audio-manage', [AudioFileController::class, 'store'])->name('audio.manage.store');
+    Route::delete('/audio-manage/{audioFile}', [AudioFileController::class, 'destroy'])->name('audio.manage.destroy');
 
 
     Route::get('/post-search', [PostSearchController::class, 'index'])->name('post.search');
