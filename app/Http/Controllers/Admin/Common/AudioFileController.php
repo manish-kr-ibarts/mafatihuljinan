@@ -16,12 +16,11 @@ class AudioFileController extends Controller
      */
     public function index(Request $request)
     {
-        $language = $request->get('language', 'english');
+        $language = strtolower($request->get('language', 'english'));
         $audioFiles = AudioFile::where('language', $language)
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 25));
-
         return view('admin.audio.manage', compact('audioFiles', 'language'));
     }
 
@@ -38,7 +37,7 @@ class AudioFileController extends Controller
 
         try {
             $audio = $request->file('audio');
-            $language = $request->language;
+            $language = strtolower($request->language);
             $postType = strtolower($request->post_type);
 
             $originalName = pathinfo($audio->getClientOriginalName(), PATHINFO_FILENAME);

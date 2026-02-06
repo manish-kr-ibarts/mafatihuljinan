@@ -19,16 +19,16 @@
                         <i class="fas fa-home mr-3"></i> Dashboard
                     </a>
                 </li>
-                <li>
+                <!-- <li>
                     <a href="{{ route('admin.uploadAudioPage', ['language' => 'english']) }}"
                         class="flex items-center px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#034E7A] transition-all duration-200 group {{ Route::is('admin.uploadAudioPage') ? 'bg-[#034E7A] text-white shadow-md' : '' }}">
                         <i class="fas fa-microphone mr-3"></i> Upload Audio
                     </a>
-                </li>
+                </li> -->
                 <li>
                     <a href="{{ route('admin.audio.manage', ['language' => 'english']) }}"
                         class="flex items-center px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#034E7A] transition-all duration-200 group {{ Route::is('admin.audio.manage') ? 'bg-[#034E7A] text-white shadow-md' : '' }}">
-                        <i class="fas fa-headphones mr-3"></i> Manage Tracked Audio
+                        <i class="fas fa-microphone mr-3"></i> Manage Audio
                     </a>
                 </li>
                 <li>

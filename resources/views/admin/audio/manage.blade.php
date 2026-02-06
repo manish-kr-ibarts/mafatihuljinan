@@ -160,7 +160,6 @@
 @endsection
 
 <!-- Scripts -->
-@push('scripts')
 <script>
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
@@ -182,4 +181,3 @@
         window.location.href = currentUrl.toString();
     }
 </script>
-@endpush
