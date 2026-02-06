@@ -899,6 +899,12 @@
                         <i class="fas fa-bell mr-3"></i> English Notification
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('admin.prayertime-notifications.index') }}"
+                        class="flex items-center px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#034E7A] transition-all duration-200 group {{ Route::is('admin.prayertime-notifications.*') ? 'bg-[#034E7A] text-white shadow-md' : '' }}">
+                        <i class="fas fa-clock mr-3"></i> Hijri Notification
+                    </a>
+                </li>
             </ul>
         </div>
 

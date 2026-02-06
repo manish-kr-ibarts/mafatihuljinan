@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\Swahili\SwahiliPostController;
 use App\Http\Controllers\Admin\Swahili\SwahiliCategoryController;
 use App\Http\Controllers\Admin\Common\EventPopupController;
 use App\Http\Controllers\Admin\Common\PostSearchController;
+use App\Http\Controllers\Admin\Common\PrayertimeNotificationController;
 use App\Http\Controllers\BackupController;
 
 use App\Http\Controllers\Admin\Common\NotificationController;
@@ -160,6 +161,20 @@ Route::middleware(['auth', 'role:admin,editor'])->prefix('admin')->name('admin.'
         ->name('notifications.schedule.destroy');
     Route::post('/notifications/instant-send', [NotificationController::class, 'sendInstant'])
         ->name('notifications.instant.send');
+
+    // Prayer Time Notifications
+    Route::get('/prayertime-notifications', [PrayertimeNotificationController::class, 'index'])
+        ->name('prayertime-notifications.index');
+    Route::get('/prayertime-notifications/create', [PrayertimeNotificationController::class, 'create'])
+        ->name('prayertime-notifications.create');
+    Route::post('/prayertime-notifications', [PrayertimeNotificationController::class, 'store'])
+        ->name('prayertime-notifications.store');
+    Route::get('/prayertime-notifications/{prayertimeNotification}/edit', [PrayertimeNotificationController::class, 'edit'])
+        ->name('prayertime-notifications.edit');
+    Route::put('/prayertime-notifications/{prayertimeNotification}', [PrayertimeNotificationController::class, 'update'])
+        ->name('prayertime-notifications.update');
+    Route::delete('/prayertime-notifications/{prayertimeNotification}', [PrayertimeNotificationController::class, 'destroy'])
+        ->name('prayertime-notifications.destroy');
 
 
 

@@ -3,7 +3,7 @@
 @section('title', 'Users')
 
 @section('content')
-<div class="min-h-screen bg-gray-100">
+<div class=" bg-gray-100">
     <div class="w-full max-w-7xl mx-auto bg-white rounded-xl ">
 
         <!-- Header Title -->
@@ -30,7 +30,7 @@
         </div>
 
         <!-- Horizontal Scroll Container -->
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto p-4 my-4 border rounded-xl">
             <div class="min-w-max">
                 <!-- Table Header -->
                 <!-- Table Header -->

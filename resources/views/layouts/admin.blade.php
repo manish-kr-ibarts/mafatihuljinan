@@ -42,7 +42,7 @@
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto w-full">
             <!-- Header -->
-            <div class="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-white/90 backdrop-blur-md border-b border-gray-200 mb-6 transition-all">
+            <div class="sticky top-0 z-30 flex items-center justify-between px-6 bg-white/90 backdrop-blur-md border-b border-gray-200 mb-6 transition-all">
                 <!-- Hamburger for mobile/tablet -->
                 <button id="openSidebar" class="xl:hidden text-gray-500 hover:text-primary text-2xl focus:outline-none transition-colors mr-4">
                     <i class="fas fa-bars"></i>

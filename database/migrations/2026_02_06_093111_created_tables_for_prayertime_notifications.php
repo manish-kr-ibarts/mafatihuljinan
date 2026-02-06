@@ -53,6 +53,7 @@ return new class extends Migration
             $table->string('month')->nullable();
             $table->integer('year')->nullable();
             $table->string('prayer_type')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
         });
     }
