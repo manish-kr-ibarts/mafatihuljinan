@@ -12,7 +12,7 @@ use Kreait\Firebase\Messaging\AndroidConfig;
 use Kreait\Firebase\Messaging\ApnsConfig;
 use Kreait\Firebase\Exception\MessagingException;
 use Kreait\Firebase\Exception\FirebaseException;
-use Kreait\Laravel\Firebase\Facades\Firebase; // ✅ Use the facade
+use Kreait\Laravel\Firebase\Facades\Firebase; // Use the facade
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Messaging\MulticastSendReport;
 use Illuminate\Support\Facades\Validator;

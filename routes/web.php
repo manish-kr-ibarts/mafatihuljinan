@@ -181,8 +181,9 @@ Route::middleware(['auth', 'role:admin,editor'])->prefix('admin')->name('admin.'
         ->name('prayertime-notifications.update');
     Route::delete('/prayertime-notifications/{prayertimeNotification}', [PrayertimeNotificationController::class, 'destroy'])
         ->name('prayertime-notifications.destroy');
-
-
+    
+    Route::get('/prayertime-notifications-sync', [PrayertimeNotificationController::class, 'syncPrayerTimes'])
+        ->name('prayertime-notifications.sync');
 
 
     // English

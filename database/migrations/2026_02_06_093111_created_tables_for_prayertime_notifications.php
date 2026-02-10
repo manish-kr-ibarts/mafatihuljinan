@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('prayertime_noti_tokens', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id')->nullable();
+            $table->string('language')->nullable();
             $table->string('fcm_token', 300);
             $table->string('timezone')->nullable();
             $table->string('user_lat')->nullable();

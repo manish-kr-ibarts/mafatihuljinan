@@ -13,6 +13,7 @@ class PrayertimeNotiToken extends Model
 
     protected $fillable = [
         'user_id',
+        'language',
         'fcm_token',
         'timezone',
         'user_lat',

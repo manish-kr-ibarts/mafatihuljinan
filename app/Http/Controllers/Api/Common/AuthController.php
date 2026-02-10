@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Common\UserFcmToken;
+use App\Models\Common\PrayertimeNotiToken;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -180,6 +181,15 @@ class AuthController extends Controller
                     'is_active'   => true,
                 ]
             );
+            // $prayertimeData = [
+            //     'fcm_token'  => $request->fcm_token,
+            //     'language'   => $request->language ?? 'english',
+            //     'user_lat'   => $request->latitude ?? null,
+            //     'user_long'  => $request->longitude ?? null,
+            //     'timezone'   => $request->timezone ?? null,
+            //     'day_difference' => $request->day_difference ?? null,
+            // ];
+            // $this->storeUserFcmTokenForHijriDateNotification($prayertimeData, $user);
 
             return response()->json([
                 'status' => true,
@@ -598,11 +608,17 @@ class AuthController extends Controller
 
     public function storeFcmToken(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'fcm_token'  => 'required|string',
             'device_type' => 'required|in:android,ios,web',
             'device_id'  => 'required|string',
-            'language'   => 'nullable|string|max:5',
+            'language'   => 'nullable|string|max:10',
+            'latitude'   => 'nullable|string',
+            'longitude'  => 'nullable|string',
+            'timezone'   => 'nullable|string',
+            'day_difference' => 'nullable|string',
+            'user_id'    => 'nullable|exists:users,id',
         ]);
 
         $token = UserFcmToken::updateOrCreate(
@@ -615,14 +631,45 @@ class AuthController extends Controller
                 'device_type' => $request->device_type,
                 'language'   => $request->language ?? 'en',
                 'is_active'  => true,
-                'user_id'     => null,
+                'user_id'     => $request->user_id ?? null,
             ]
         );
+
+        $prayertimeData = [
+            'fcm_token'  => $request->fcm_token,
+            'language'   => $request->language ?? 'english',
+            'user_id'    => $request->user_id ?? null,
+            'user_lat'   => $request->latitude ?? null,
+            'user_long'  => $request->longitude ?? null,
+            'timezone'   => $request->timezone ?? null,
+            'day_difference' => $request->day_difference ?? null,
+        ];
+        $this->storeUserFcmTokenForHijriDateNotification($prayertimeData, $request->user_id);
 
         return response()->json([
             'status'  => true,
             'message' => 'FCM token saved successfully',
             'data'    => $token,
         ]);
+    }
+
+    public function storeUserFcmTokenForHijriDateNotification($prayertimeData, $user_id = null)
+    {
+        // dd($prayertimeData, $user_id);
+
+        PrayertimeNotiToken::updateOrCreate(
+            [
+                'fcm_token'  => $prayertimeData['fcm_token'],
+            ],
+            [
+                'fcm_token'  => $prayertimeData['fcm_token'],
+                'language'   => $prayertimeData['language'] ?? 'english',
+                'user_id'     => $user_id ?? null,
+                'user_lat'    => $prayertimeData['user_lat'] ?? null,
+                'user_long'   => $prayertimeData['user_long'] ?? null,
+                'timezone'    => $prayertimeData['timezone'] ?? null,
+                'day_difference' => $prayertimeData['day_difference'] ?? null,
+            ]
+        );
     }
 }
