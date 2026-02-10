@@ -14,14 +14,17 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\Common\UserFcmToken;
 use App\Models\Common\NotificationSchedule;
+use App\Models\Common\PrayertimeNotiHijriDate;
+use App\Services\HijriDateService;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Messaging\AndroidConfig;
 use Kreait\Firebase\Messaging\ApnsConfig;
 use Kreait\Firebase\Exception\MessagingException;
 use Kreait\Firebase\Exception\FirebaseException;
-use Kreait\Laravel\Firebase\Facades\Firebase; // Use the facade
-use Kreait\Firebase\Messaging\MulticastSendReport;
+use Kreait\Laravel\Firebase\Facades\Firebase;
+use Kreait\Firebase\Messaging\AndroidNotification;
+use Kreait\Firebase\Messaging\Aps;
 
 class PrayertimeNotificationController extends Controller
 {
@@ -168,71 +171,236 @@ class PrayertimeNotificationController extends Controller
         ]);
     }
 
-    public function sendScheduledNotification()
+    public function syncHijriDates()
     {
-        $notificationMessages = PrayertimeNotiMessage::where('status', 'active')->get();
-        foreach ($notificationMessages as $notificationMessage) {
-            $this->sendNotification($notificationMessage);
+        try {
+            for ($i = -5; $i <= 5; $i++) {
+                $date = Carbon::now()->addDays($i)->format('Y-m-d');
+                $hijri = new HijriDateService(strtotime($date));
+
+                $hijrimonth = $hijri->get_month();
+                $hijrimonthname = $hijri->get_month_name($hijrimonth);
+                $hijrimonthname = str_replace("'", "", $hijrimonthname);
+
+                PrayertimeNotiHijriDate::updateOrCreate(
+                    ['day_difference' => $i],
+                    [
+                        'hijri_date'      => $hijri->get_date(),
+                        'hijri_day'       => $hijri->get_day(),
+                        'hijri_monthname' => $hijrimonthname,
+                        'hijri_year'      => $hijri->get_year(),
+                    ]
+                );
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Hijri dates updated successfully for offsets -5 to +5.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to update Hijri dates: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to update Hijri dates: ' . $e->getMessage()
+            ], 500);
         }
     }
 
+
+
+    // scheduled notification for hinri date
+    public function sendScheduledNotification()
+    {
+        $activeMessages = PrayertimeNotiMessage::where('status', 'active')->get();
+        if ($activeMessages->isEmpty()) {
+            return;
+        }
+
+        $timezones = PrayertimeNotiToken::whereNotNull('timezone')->distinct()->pluck('timezone');
+        $hijriCache = [];
+
+        foreach ($timezones as $timezone) {
+            try {
+                $now = Carbon::now($timezone);
+                $dayName = $now->format('l');
+
+                // 5 minute window: (now - 5 min, now]
+                $windowTimes = [];
+                for ($i = 0; $i < 5; $i++) {
+                    $windowTimes[] = $now->copy()->subMinutes($i)->format('H:i');
+                }
+
+                foreach ($activeMessages as $message) {
+                    $prayerType = $message->prayer_type;
+                    if (!$prayerType) continue;
+
+                    $baseType = $prayerType;
+                    $offset = 0;
+
+                    if ($prayerType == '30_min_before_fajr') {
+                        $baseType = 'fajr';
+                        $offset = -30;
+                    } elseif ($prayerType == '30_min_after_maghrib') {
+                        $baseType = 'maghrib';
+                        $offset = 30;
+                    }
+
+                    // Target database times: prayerTime = targetTime - offset
+                    $targetDbTimes = [];
+                    foreach ($windowTimes as $wt) {
+                        try {
+                            $targetDbTimes[] = Carbon::createFromFormat('H:i', $wt)
+                                ->subMinutes($offset)
+                                ->format('H:i');
+                        } catch (\Exception $e) {
+                            continue;
+                        }
+                    }
+
+                    // Fetch tokens whose specific prayer time falls in the target window
+                    $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                        ->whereNotNull('fcm_token')
+                        ->where(function ($query) use ($baseType, $targetDbTimes) {
+                            foreach ($targetDbTimes as $time) {
+                                $query->orWhere($baseType, 'LIKE', $time . '%');
+                            }
+                        })
+                        ->get();
+
+                    if ($tokens->isEmpty()) continue;
+
+                    $matchingFcmTokens = [];
+                    foreach ($tokens as $token) {
+                        $dd = $token->day_difference ?? 0;
+
+                        // Check if it's after Maghrib to shift Hijri date
+                        if ($token->maghrib) {
+                            try {
+                                $maghribTime = Carbon::createFromFormat('H:i', explode(' ', $token->maghrib)[0], $timezone);
+                                if ($now->greaterThan($maghribTime)) {
+                                    $dd++;
+                                }
+                            } catch (\Exception $e) {
+                                // Skip if time format is invalid
+                            }
+                        }
+
+                        // Cap dd at -5 to 5 as per available rows
+                        $dd = max(-5, min(5, $dd));
+
+                        if (!isset($hijriCache[$dd])) {
+                            $hijriCache[$dd] = PrayertimeNotiHijriDate::where('day_difference', $dd)->first();
+                        }
+                        $hijriData = $hijriCache[$dd];
+
+                        if ($hijriData && $this->checkFrequency($message, $hijriData, $dayName)) {
+                            $matchingFcmTokens[] = $token->fcm_token;
+                        }
+                    }
+
+                    if (!empty($matchingFcmTokens)) {
+                        $this->sendPushNotificationBulk($matchingFcmTokens, $message);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error("Error processing notifications for timezone {$timezone}: " . $e->getMessage());
+            }
+        }
+    }
+
+    protected function checkFrequency($message, $hijriData, $dayName)
+    {
+        $hijriMonths = [
+            "january"   => "Muharram",
+            "february"  => "Safar",
+            "march"     => "Rabi'ul Awwal",
+            "april"     => "Rabi'ul Akhir",
+            "may"       => "Jumadal Ula",
+            "june"      => "Jumadal Akhira",
+            "july"      => "Rajab",
+            "august"    => "Sha'ban",
+            "september" => "Ramadan",
+            "october"   => "Shawwal",
+            "november"  => "Dhul Qa'ada",
+            "december"  => "Dhul Hijja"
+        ];
+
+        return match ($message->frequency) {
+            'daily'   => true,
+            'weekly'  => strtolower($message->week_day) === strtolower($dayName),
+            'monthly' => (int)$message->day === (int)$hijriData->hijri_day,
+            'yearly'  => (int)$message->day === (int)$hijriData->hijri_day &&
+                ($hijriMonths[strtolower($message->month)] ?? null) === $hijriData->hijri_monthname,
+            'custom'  => (int)$message->day === (int)$hijriData->hijri_day &&
+                ($hijriMonths[strtolower($message->month)] ?? null) === $hijriData->hijri_monthname &&
+                (int)$message->year === (int)$hijriData->hijri_year,
+            default   => false,
+        };
+    }
+
+
+    // No longer used but kept for backward compatibility if called directly
+    protected function shouldSendMessage($currentTime, $message, $token, $hijriData, $dayName)
+    {
+        return $this->checkFrequency($message, $hijriData, $dayName);
+    }
+
+
     public function sendNotification($notificationSchedule)
     {
-        $tokens = UserFcmToken::where('status', 'active')->get();
-        foreach ($tokens as $token) {
-            $this->sendPushNotification($token->token, $notificationSchedule);
+        $tokens = PrayertimeNotiToken::whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
+        if (!empty($tokens)) {
+            $this->sendPushNotificationBulk($tokens, $notificationSchedule);
+        }
+    }
+
+
+    public function sendPushNotificationBulk($tokens, $notificationSchedule)
+    {
+        if (empty($tokens)) return;
+
+        $message = CloudMessage::new()
+            ->withNotification(Notification::create(
+                $notificationSchedule->notification_title,
+                $notificationSchedule->notification_message
+            ))
+            ->withData([
+                'message' => $notificationSchedule->notification_message,
+            ])
+            ->withAndroidConfig(AndroidConfig::fromArray([
+                'priority' => 'high',
+                'notification' => [
+                    'sound' => 'default',
+                ],
+            ]))
+            ->withApnsConfig(ApnsConfig::fromArray([
+                'headers' => [
+                    'apns-priority' => '10',
+                ],
+                'payload' => [
+                    'aps' => [
+                        'sound' => 'default',
+                        'alert' => [
+                            'title' => $notificationSchedule->notification_title,
+                            'body' => $notificationSchedule->notification_message,
+                        ],
+                    ],
+                ],
+            ]));
+
+        $chunks = array_chunk($tokens, 500);
+        foreach ($chunks as $chunk) {
+            try {
+                Firebase::messaging()->sendMulticast($message, $chunk);
+                Log::info('Bulk notifications sent successfully', ['count' => count($chunk)]);
+            } catch (\Exception $e) {
+                Log::error('Bulk notification failed', ['error' => $e->getMessage()]);
+            }
         }
     }
 
     public function sendPushNotification($token, $notificationSchedule)
     {
-        $message = CloudMessage::withTarget('token', $token)
-            ->withNotification(Notification::create(
-                $notificationSchedule->notification_title,
-                $notificationSchedule->notification_message
-            ))
-            ->withAndroidConfig(
-                AndroidConfig::new()
-                    ->setPriority('high')
-                    ->setTtl(0)
-                    ->setNotification(
-                        AndroidNotification::create()
-                            ->setSound('default')
-                            ->setPriority('high')
-                    )
-            )
-            ->withApnsConfig(
-                ApnsConfig::new()
-                    ->setHeaders([
-                        'apns-priority' => '10',
-                        'apns-topic' => 'com.example.app', // Replace with your app's bundle ID
-                    ])
-                    ->setAps(
-                        Aps::create()
-                            ->setSound('default')
-                            ->setAlert([
-                                'title' => $notificationSchedule->notification_title,
-                                'body' => $notificationSchedule->notification_message,
-                            ])
-                    )
-            );
-
-        try {
-            $response = Firebase::messaging()->send($message);
-            Log::info('Notification sent successfully:', [
-                'token' => $token,
-                'response' => $response
-            ]);
-        } catch (MessagingException $e) {
-            Log::error('Failed to send notification:', [
-                'token' => $token,
-                'error' => $e->getMessage()
-            ]);
-        } catch (FirebaseException $e) {
-            Log::error('Firebase error:', [
-                'token' => $token,
-                'error' => $e->getMessage()
-            ]);
-        }
+        $this->sendPushNotificationBulk([$token], $notificationSchedule);
     }
 }

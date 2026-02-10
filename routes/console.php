@@ -13,3 +13,7 @@ Artisan::command('inspire', function () {
 Schedule::command('notifications:send-scheduled')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('prayertime-notifications:send')
+    ->everyMinute()
+    ->withoutOverlapping();

@@ -884,18 +884,16 @@
             <ul class="space-y-1">
                 <li>
                     <a href="{{ route('admin.post.search') }}"
-                        class="flex items-center px-2 py-1 rounded 
-                      hover:bg-[#034E7A] hover:text-white 
-                      {{ Route::is('admin.post.search') ? 'bg-[#034E7A] text-white font-semibold' : '' }}">
+                        class="flex items-center px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#034E7A] transition-all duration-200 group
+                      {{ Route::is('admin.post.search') ? 'bg-[#034E7A] text-white shadow-md' : '' }}">
                         <i class="fa fa-search mr-3"></i> Search Posts
                     </a>
                 </li>
 
                 <li>
                     <a href="{{ route('admin.users') }}"
-                        class="flex items-center px-2 py-1 rounded 
-                      hover:bg-[#034E7A] hover:text-white 
-                      {{ Route::is('admin.users') || Route::is('admin.users.*') ? 'bg-[#034E7A] text-white font-semibold' : '' }}">
+                        class="flex items-center px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#034E7A] transition-all duration-200 group
+                      {{ Route::is('admin.users') || Route::is('admin.users.*') ? 'bg-[#034E7A] text-white shadow-md' : '' }}">
                         <i class="fas fa-users mr-3"></i> Users
                     </a>
                 </li>

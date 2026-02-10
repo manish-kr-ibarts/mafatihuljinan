@@ -181,9 +181,15 @@ Route::middleware(['auth', 'role:admin,editor'])->prefix('admin')->name('admin.'
         ->name('prayertime-notifications.update');
     Route::delete('/prayertime-notifications/{prayertimeNotification}', [PrayertimeNotificationController::class, 'destroy'])
         ->name('prayertime-notifications.destroy');
-    
-    Route::get('/prayertime-notifications-sync', [PrayertimeNotificationController::class, 'syncPrayerTimes'])
-        ->name('prayertime-notifications.sync');
+
+    Route::get('/prayertime-sync', [PrayertimeNotificationController::class, 'syncPrayerTimes'])
+        ->name('prayertime-sync');
+
+    Route::get('/prayertime-sync-hijri-dates', [PrayertimeNotificationController::class, 'syncHijriDates'])
+        ->name('prayertime-sync-hijri-dates');
+
+    Route::get('/prayertime-send', [PrayertimeNotificationController::class, 'sendScheduledNotification'])
+        ->name('prayertime-send');
 
 
     // English

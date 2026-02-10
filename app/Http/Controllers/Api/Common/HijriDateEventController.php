@@ -121,7 +121,7 @@ class HijriDateEventController extends Controller
                 $datediff = $datediff + 1;
             }
         }
-        if($dayDifference){
+        if ($dayDifference) {
             $datediff = $dayDifference;
         }
         $datevar = new \DateTime($date);
@@ -205,7 +205,7 @@ class HijriDateEventController extends Controller
                 $datediff = $datediff + 1;
             }
         }
-        if($dayDifference){
+        if ($dayDifference) {
             $datediff = $dayDifference;
         }
         $datevar = new \DateTime($date);
@@ -315,7 +315,7 @@ class HijriDateEventController extends Controller
                 $datediff = $datediff + 1;
             }
         }
-        if($dayDifference){
+        if ($dayDifference) {
             $datediff = $dayDifference;
         }
         $date->modify($datediff . ' day');

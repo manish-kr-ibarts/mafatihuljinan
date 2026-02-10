@@ -15,6 +15,7 @@ class SendScheduledNotifications extends Command
 
     public function handle(): int
     {
+        Log::error('Scheduled running');
         // $now = Carbon::now();
         // $now = Carbon::now('Asia/Kolkata');
         $now = Carbon::now('UTC');
