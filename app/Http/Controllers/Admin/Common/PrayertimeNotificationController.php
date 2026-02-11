@@ -223,81 +223,104 @@ class PrayertimeNotificationController extends Controller
             try {
                 $now = Carbon::now($timezone);
                 $dayName = $now->format('l');
-
+                $currentTime = $now->format('H:i');
                 // 5 minute window: (now - 5 min, now]
-                $windowTimes = [];
-                for ($i = 0; $i < 5; $i++) {
-                    $windowTimes[] = $now->copy()->subMinutes($i)->format('H:i');
-                }
-
+                $differenceTime = 0;
+                $differenceTime = $now->copy()->subMinutes(5)->format('H:i');
+                // dd($currentTime, $differenceTime);
                 foreach ($activeMessages as $message) {
                     $prayerType = $message->prayer_type;
                     if (!$prayerType) continue;
 
                     $baseType = $prayerType;
                     $offset = 0;
-
                     if ($prayerType == '30_min_before_fajr') {
-                        $baseType = 'fajr';
-                        $offset = -30;
+                        $differenceTime = $now->copy()->subMinutes(-35)->format('H:i');
                     } elseif ($prayerType == '30_min_after_maghrib') {
-                        $baseType = 'maghrib';
-                        $offset = 30;
+                        $differenceTime = $now->copy()->addMinutes(35)->format('H:i');
                     }
 
-                    // Target database times: prayerTime = targetTime - offset
-                    $targetDbTimes = [];
-                    foreach ($windowTimes as $wt) {
-                        try {
-                            $targetDbTimes[] = Carbon::createFromFormat('H:i', $wt)
-                                ->subMinutes($offset)
-                                ->format('H:i');
-                        } catch (\Exception $e) {
-                            continue;
-                        }
+                    // Fetch tokens
+                    if ($prayerType == '30_min_before_fajr') {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->where('fajr', '>=', $differenceTime)
+                            ->whereNotNull('fcm_token')
+                            ->get();
+                    } elseif ($baseType == 'fajr') {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->where('fajr', '>=', $differenceTime)
+                            ->where('fajr', '<=', $currentTime)
+                            ->whereNotNull('fcm_token')
+                            ->get();
+                    } elseif ($baseType == 'sunrise') {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->where('sunrise', '>=', $differenceTime)
+                            ->where('sunrise', '<=', $currentTime)
+                            ->whereNotNull('fcm_token')
+                            ->get();
+                    } elseif ($baseType == 'dhuhr') {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->where('dhuhr', '>=', $differenceTime)
+                            ->where('dhuhr', '<=', $currentTime)
+                            ->whereNotNull('fcm_token')
+                            ->get();
+                    } elseif ($baseType == 'sunset') {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->where('sunset', '>=', $differenceTime)
+                            ->where('sunset', '<=', $currentTime)
+                            ->whereNotNull('fcm_token')
+                            ->get();
+                    } elseif ($baseType == 'maghrib') {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->where('maghrib', '>=', $differenceTime)
+                            ->where('maghrib', '<=', $currentTime)
+                            ->whereNotNull('fcm_token')
+                            ->get();
+                    } elseif ($baseType == '30_min_after_maghrib') {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->where('maghrib', '>=', $differenceTime)
+                            ->where('maghrib', '<=', $currentTime)
+                            ->whereNotNull('fcm_token')
+                            ->get();
+                    } else {
+                        $tokens = PrayertimeNotiToken::where('timezone', $timezone)
+                            ->whereNotNull('fcm_token')
+                            ->get();
                     }
-
-                    // Fetch tokens whose specific prayer time falls in the target window
-                    $tokens = PrayertimeNotiToken::where('timezone', $timezone)
-                        ->whereNotNull('fcm_token')
-                        ->where(function ($query) use ($baseType, $targetDbTimes) {
-                            foreach ($targetDbTimes as $time) {
-                                $query->orWhere($baseType, 'LIKE', $time . '%');
-                            }
-                        })
-                        ->get();
 
                     if ($tokens->isEmpty()) continue;
 
                     $matchingFcmTokens = [];
+                    // foreach ($tokens as $token) {
+                    //     $dd = $token->day_difference ?? 0;
+
+                    //     // Check if it's after Maghrib to shift Hijri date
+                    //     if ($token->maghrib) {
+                    //         try {
+                    //             $maghribTime = Carbon::createFromFormat('H:i', explode(' ', $token->maghrib)[0], $timezone);
+                    //             if ($now->greaterThan($maghribTime)) {
+                    //                 $dd++;
+                    //             }
+                    //         } catch (\Exception $e) {
+                    //             // Skip if time format is invalid
+                    //         }
+                    //     }
+
+                    //     // Cap dd at -5 to 5 as per available rows
+                    //     $dd = max(-5, min(5, $dd));
+
+                    //     if (!isset($hijriCache[$dd])) {
+                    //         $hijriCache[$dd] = PrayertimeNotiHijriDate::where('day_difference', $dd)->first();
+                    //     }
+                    //     $hijriData = $hijriCache[$dd];
+
+                    //     if ($hijriData && $this->checkFrequency($message, $hijriData, $dayName)) {
+                    //         $matchingFcmTokens[] = $token->fcm_token;
+                    //     }
+                    // }
                     foreach ($tokens as $token) {
-                        $dd = $token->day_difference ?? 0;
-
-                        // Check if it's after Maghrib to shift Hijri date
-                        if ($token->maghrib) {
-                            try {
-                                $maghribTime = Carbon::createFromFormat('H:i', explode(' ', $token->maghrib)[0], $timezone);
-                                if ($now->greaterThan($maghribTime)) {
-                                    $dd++;
-                                }
-                            } catch (\Exception $e) {
-                                // Skip if time format is invalid
-                            }
-                        }
-
-                        // Cap dd at -5 to 5 as per available rows
-                        $dd = max(-5, min(5, $dd));
-
-                        if (!isset($hijriCache[$dd])) {
-                            $hijriCache[$dd] = PrayertimeNotiHijriDate::where('day_difference', $dd)->first();
-                        }
-                        $hijriData = $hijriCache[$dd];
-
-                        if ($hijriData && $this->checkFrequency($message, $hijriData, $dayName)) {
-                            $matchingFcmTokens[] = $token->fcm_token;
-                        }
+                        $matchingFcmTokens[] = $token->fcm_token;
                     }
-
                     if (!empty($matchingFcmTokens)) {
                         $this->sendPushNotificationBulk($matchingFcmTokens, $message);
                     }
