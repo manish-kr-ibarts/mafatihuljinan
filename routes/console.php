@@ -17,3 +17,7 @@ Schedule::command('notifications:send-scheduled')
 Schedule::command('prayertime-notifications:send')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('hijri-notification:sync-prayer-times')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping();

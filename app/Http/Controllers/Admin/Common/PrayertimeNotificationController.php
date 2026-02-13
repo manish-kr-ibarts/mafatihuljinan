@@ -112,12 +112,10 @@ class PrayertimeNotificationController extends Controller
         set_time_limit(300); // Increasing time limit for bulk update
 
         $tokens = PrayertimeNotiToken::whereNull('prayer_updated_at')
-            ->orWhere('prayer_updated_at', '<=', now()->subHours(3))
-            ->limit(5000)
+            ->orWhere('prayer_updated_at', '<=', now()->subHours(2))
             ->get();
 
         $totalUpdated = 0;
-
         foreach ($tokens as $token) {
             $latitude = $token->user_lat;
             $longitude = $token->user_long;
@@ -128,7 +126,6 @@ class PrayertimeNotificationController extends Controller
             }
 
             try {
-                // Calculation method 0: Shia Ithna-Ashari, Leva Institute, Qum
                 $method = 0;
                 $timestamp = Carbon::now($timezone)->timestamp;
 
@@ -143,19 +140,23 @@ class PrayertimeNotificationController extends Controller
 
                     if (isset($data['status']) && $data['status'] === 'OK') {
                         $timings = $data['data']['timings'];
-
+                        $fajr = Carbon::parse($timings['Fajr']);
+                        $maghrib = Carbon::parse($timings['Maghrib']);
                         $token->update([
                             'fajr'              => $timings['Fajr'],
                             'sunrise'           => $timings['Sunrise'],
                             'dhuhr'             => $timings['Dhuhr'],
                             'sunset'            => $timings['Sunset'],
                             'maghrib'           => $timings['Maghrib'],
+                            '30_min_before_fajr' => $fajr->subMinutes(30)->format('H:i'),
+                            '30_min_after_maghrib' => $maghrib->addMinutes(30)->format('H:i'),
                             'prayer_updated_at' => now(),
                         ]);
 
                         $totalUpdated++;
                         // Small delay to avoid hitting API rate limits if necessary
                         usleep(50000); // 50ms delay
+                        usleep(200000); // 200ms delay
                     }
                 }
             } catch (\Exception $e) {
@@ -211,6 +212,20 @@ class PrayertimeNotificationController extends Controller
     // scheduled notification for hinri date
     public function sendScheduledNotification()
     {
+        $hijriMonths = [
+            "january"   => "Muharram",
+            "february"  => "Safar",
+            "march"     => "Rabi'ul Awwal",
+            "april"     => "Rabi'ul Akhir",
+            "may"       => "Jumadal Ula",
+            "june"      => "Jumadal Akhira",
+            "july"      => "Rajab",
+            "august"    => "Sha'ban",
+            "september" => "Ramadan",
+            "october"   => "Shawwal",
+            "november"  => "Dhul Qa'ada",
+            "december"  => "Dhul Hijja"
+        ];
         $activeMessages = PrayertimeNotiMessage::where('status', 'active')->get();
         if ($activeMessages->isEmpty()) {
             return;
@@ -232,69 +247,62 @@ class PrayertimeNotificationController extends Controller
                     $prayerType = $message->prayer_type;
                     if (!$prayerType) continue;
 
-                    $date = Carbon::now()->format('Y-m-d');
-                    $hijri = new HijriDateService(strtotime($date));
-
-                    $hijrimonth = $hijri->get_month();
-                    $hijrimonthname = $hijri->get_month_name($hijrimonth);
-                    $hijrimonthname = str_replace("'", "", $hijrimonthname);
-
-                    $checkFrequency = $this->checkFrequency($message, $hijri , $dayName);
-                    if (!$checkFrequency) continue;
-
-                    $baseType = $prayerType;
-                    $offset = 0;
-                    if ($prayerType == '30_min_before_fajr') {
-                        $differenceTime = $now->copy()->subMinutes(-35)->format('H:i');
-                    } elseif ($prayerType == '30_min_after_maghrib') {
-                        $differenceTime = $now->copy()->addMinutes(35)->format('H:i');
-                    }
+                    $frequency = $message->frequency;
 
                     // Fetch tokens
                     if ($prayerType == '30_min_before_fajr') {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
-                            ->where('fajr', '>=', $differenceTime)
+                            ->where('30_min_before_fajr', '>=', $differenceTime)
+                            ->where('30_min_before_fajr', '<=', $currentTime)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
-                    } elseif ($baseType == 'fajr') {
+                    } elseif ($prayerType == 'fajr') {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
                             ->where('fajr', '>=', $differenceTime)
                             ->where('fajr', '<=', $currentTime)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
-                    } elseif ($baseType == 'sunrise') {
+                    } elseif ($prayerType == 'sunrise') {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
                             ->where('sunrise', '>=', $differenceTime)
                             ->where('sunrise', '<=', $currentTime)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
-                    } elseif ($baseType == 'dhuhr') {
+                    } elseif ($prayerType == 'dhuhr') {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
                             ->where('dhuhr', '>=', $differenceTime)
                             ->where('dhuhr', '<=', $currentTime)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
-                    } elseif ($baseType == 'sunset') {
+                    } elseif ($prayerType == 'sunset') {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
                             ->where('sunset', '>=', $differenceTime)
                             ->where('sunset', '<=', $currentTime)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
-                    } elseif ($baseType == 'maghrib') {
+                    } elseif ($prayerType == 'maghrib') {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
                             ->where('maghrib', '>=', $differenceTime)
                             ->where('maghrib', '<=', $currentTime)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
-                    } elseif ($baseType == '30_min_after_maghrib') {
+                    } elseif ($prayerType == '30_min_after_maghrib') {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
-                            ->where('maghrib', '>=', $differenceTime)
-                            ->where('maghrib', '<=', $currentTime)
+                            ->where('30_min_after_maghrib', '>=', $differenceTime)
+                            ->where('30_min_after_maghrib', '<=', $currentTime)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
                     } else {
                         $tokens = PrayertimeNotiToken::where('timezone', $timezone)
                             ->whereNotNull('fcm_token')
+                            ->where('language', $message->language)
                             ->get();
                     }
 
@@ -302,7 +310,42 @@ class PrayertimeNotificationController extends Controller
 
                     $matchingFcmTokens = [];
                     foreach ($tokens as $token) {
-                        $matchingFcmTokens[] = $token->fcm_token;
+                        if ($frequency == 'daily') {
+                            $matchingFcmTokens[] = $token->fcm_token;
+                        } else  if ($frequency == 'weekly') {
+                            if (strtolower($dayName) == strtolower($message->week_day)) {
+                                $matchingFcmTokens[] = $token->fcm_token;
+                            }
+                        } else {
+                            if ($token->day_difference != 0 && ($token->day_difference != '' && $token->day_difference != null)) {
+                                $date = Carbon::now($timezone)->addDays((int)$token->day_difference)->format('Y-m-d');
+                            } else {
+                                $date = Carbon::now($timezone)->format('Y-m-d');
+                            }
+                            $hijri = new HijriDateService(strtotime($date));
+
+                            $hijriday = $hijri->get_day();
+                            $hijrimonth = $hijri->get_month();
+                            $hijrimonthname = $hijri->get_month_name($hijrimonth);
+                            $hijriyear = $hijri->get_year();
+
+                            if ($frequency == 'monthly') {
+                                if ($hijriday  != $message->day) {
+                                    continue;
+                                }
+                                $matchingFcmTokens[] = $token->fcm_token;
+                            } else if ($frequency == 'yearly') {
+                                if ($hijriday != $message->day || $hijrimonthname != $hijriMonths[strtolower($message->month)]) {
+                                    continue;
+                                }
+                                $matchingFcmTokens[] = $token->fcm_token;
+                            } else if ($frequency == 'custom') {
+                                if ($hijriday != $message->day || $hijrimonthname != $hijriMonths[strtolower($message->month)] || $hijriyear != $message->year) {
+                                    continue;
+                                }
+                                $matchingFcmTokens[] = $token->fcm_token;
+                            }
+                        }
                     }
                     if (!empty($matchingFcmTokens)) {
                         $this->sendPushNotificationBulk($matchingFcmTokens, $message);
@@ -330,29 +373,30 @@ class PrayertimeNotificationController extends Controller
             "november"  => "Dhul Qa'ada",
             "december"  => "Dhul Hijja"
         ];
+        $hijriDay   = $hijriData->get_day();
+        $hijriMonth = $hijriData->get_month_name($hijriData->get_month());
+        $hijriYear  = $hijriData->get_year();
 
         return match ($message->frequency) {
             'daily'   => true,
-            'weekly'  => strtolower($message->week_day) == strtolower($dayName),
-            'monthly' => (int)$message->day == (int)$hijriData->hijri_day,
-            'yearly'  => (int)$message->day == (int)$hijriData->hijri_day &&
-                ($hijriMonths[strtolower($message->month)] ?? null) == $hijriData->hijri_monthname,
-            'custom'  => (int)$message->day == (int)$hijriData->hijri_day &&
-                ($hijriMonths[strtolower($message->month)] ?? null) == $hijriData->hijri_monthname &&
-                (int)$message->year == (int)$hijriData->hijri_year,
+
+            'weekly'  => strtolower($message->week_day) === strtolower($dayName),
+
+            'monthly' => (int)$message->day === (int)$hijriDay,
+
+            'yearly'  => (int)$message->day === (int)$hijriDay &&
+                ($hijriMonths[strtolower($message->month)] ?? null) === $hijriMonth,
+
+            'custom'  => (int)$message->day === (int)$hijriDay &&
+                ($hijriMonths[strtolower($message->month)] ?? null) === $hijriMonth &&
+                (int)$message->year === (int)$hijriYear,
+
             default   => false,
         };
     }
 
 
-    // No longer used but kept for backward compatibility if called directly
-    protected function shouldSendMessage($currentTime, $message, $token, $hijriData, $dayName)
-    {
-        return $this->checkFrequency($message, $hijriData, $dayName);
-    }
-
-
-    public function sendNotification($notificationSchedule)
+    public function sendNotificationToAll($notificationSchedule)
     {
         $tokens = PrayertimeNotiToken::whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
         if (!empty($tokens)) {

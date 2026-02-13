@@ -19,11 +19,13 @@ return new class extends Migration
             $table->string('timezone')->nullable();
             $table->string('user_lat')->nullable();
             $table->string('user_long')->nullable();
+            $table->string('30_min_before_fajr')->nullable();
             $table->string('fajr')->nullable();
             $table->string('sunrise')->nullable();
             $table->string('dhuhr')->nullable();
             $table->string('sunset')->nullable();
             $table->string('maghrib')->nullable();
+            $table->string('30_min_after_maghrib')->nullable();
             $table->timestamp('prayer_updated_at')->nullable();
             $table->string('day_difference', 2)->nullable();
             $table->timestamps();

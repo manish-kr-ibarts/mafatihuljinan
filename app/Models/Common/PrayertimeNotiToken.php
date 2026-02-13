@@ -18,11 +18,13 @@ class PrayertimeNotiToken extends Model
         'timezone',
         'user_lat',
         'user_long',
+        '30_min_before_fajr',
         'fajr',
         'sunrise',
         'dhuhr',
         'sunset',
         'maghrib',
+        '30_min_after_maghrib',
         'prayer_updated_at',
         'day_difference',
     ];

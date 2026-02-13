@@ -15,6 +15,48 @@
         </a>
     </div>
 
+    {{-- Frontend Filters --}}
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+        @php
+        $languages = $notifications->pluck('language')->unique()->filter();
+        $frequencies = $notifications->pluck('frequency')->unique()->filter();
+        $prayerTypes = $notifications->pluck('prayer_type')->unique()->filter();
+        @endphp
+
+        {{-- Language Filter --}}
+        <div>
+            <label for="languageFilter" class="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Language</label>
+            <select id="languageFilter" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#034E7A] text-gray-700 bg-white">
+                <option value="">ALL LANGUAGES</option>
+                @foreach($languages as $lang)
+                <option value="{{ strtoupper($lang) }}">{{ strtoupper($lang) }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Frequency Filter --}}
+        <div>
+            <label for="frequencyFilter" class="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Frequency</label>
+            <select id="frequencyFilter" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#034E7A] text-gray-700 bg-white">
+                <option value="">ALL FREQUENCIES</option>
+                @foreach($frequencies as $freq)
+                <option value="{{ strtoupper($freq) }}">{{ strtoupper($freq) }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        {{-- Prayer Type Filter --}}
+        <div>
+            <label for="prayerTypeFilter" class="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wider">Prayer Type</label>
+            <select id="prayerTypeFilter" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#034E7A] text-gray-700 bg-white">
+                <option value="">ALL PRAYER TYPES</option>
+                @foreach($prayerTypes as $type)
+                <option value="{{ strtoupper($type) }}">{{ strtoupper(str_replace('_', ' ', $type)) }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
     {{-- Table --}}
     <div class="overflow-x-auto">
         <table class="w-full border border-gray-200 text-sm">
@@ -123,4 +165,42 @@
         </table>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const languageFilter = document.getElementById('languageFilter');
+        const frequencyFilter = document.getElementById('frequencyFilter');
+        const prayerTypeFilter = document.getElementById('prayerTypeFilter');
+        const tableRows = document.querySelectorAll('tbody tr');
+
+        function filterTable() {
+            const langValue = languageFilter.value.toUpperCase();
+            const freqValue = frequencyFilter.value.toUpperCase();
+            const typeValue = prayerTypeFilter.value.toUpperCase();
+
+            tableRows.forEach(row => {
+                // Skip rows that don't have enough cells (like the 'No records' row)
+                if (row.cells.length < 8) return;
+
+                const langText = row.cells[0].textContent.trim().toUpperCase();
+                const freqText = row.cells[2].textContent.trim().toUpperCase();
+                // Ensure we get the raw text content for prayer type
+                const typeText = row.cells[4].textContent.trim().toUpperCase();
+
+                const matchesLang = langValue === '' || langText === langValue;
+                const matchesFreq = freqValue === '' || freqText === freqValue;
+                const matchesType = typeValue === '' || typeText === typeValue;
+
+                if (matchesLang && matchesFreq && matchesType) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        languageFilter.addEventListener('change', filterTable);
+        frequencyFilter.addEventListener('change', filterTable);
+        prayerTypeFilter.addEventListener('change', filterTable);
+    });
+</script>
 @endsection
