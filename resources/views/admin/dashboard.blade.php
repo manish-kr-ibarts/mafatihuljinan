@@ -13,12 +13,19 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2 space-y-2 sm:space-y-0">
                 <input
                     type="text"
-                    class="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#034E7A]"
-                    value="{{ $apiToken }}"
+                    class="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#034E7A] text-gray-500"
+                    value="{{ substr($apiToken, 0, 15) . '********************' }}"
                     readonly>
+                <input type="hidden" id="fullApiToken" value="{{ $apiToken }}">
+                <button
+                    type="button"
+                    onclick="copyApiToken()"
+                    class="bg-[#034E7A] text-white px-4 py-2 rounded hover:bg-gray-600 transition w-full sm:w-auto">
+                    Copy
+                </button>
                 <button
                     type="submit"
-                    class="bg-[#034E7A] text-white px-4 py-2 rounded hover:bg-[#02629B] transition w-full sm:w-auto">
+                    class="bg-[#034E7A] text-white px-4 py-2 rounded hover:bg-gray-600 transition w-full sm:w-auto">
                     Regenerate
                 </button>
             </div>
@@ -134,6 +141,15 @@
     document.addEventListener('DOMContentLoaded', function() {
         filterPostsByLanguage('english');
     });
+
+    function copyApiToken() {
+        var copyText = document.getElementById("fullApiToken");
+        navigator.clipboard.writeText(copyText.value).then(function() {
+            alert("Token copied to clipboard!");
+        }, function(err) {
+            console.error('Async: Could not copy text: ', err);
+        });
+    }
 </script>
 
 

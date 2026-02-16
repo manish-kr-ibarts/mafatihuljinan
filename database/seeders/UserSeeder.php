@@ -15,15 +15,21 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
+                'name' => 'Editor',
+                'email' => 'editor@mafatihuljinan.org',
+                'password' => 'editor@mafatihuljinan.org',
+                'role' => 'editor',
+            ],
+            [
                 'name' => 'Admin One',
-                'email' => 'admin1@example.com',
-                'password' => 'password1',
+                'email' => 'admin1@mafatihuljinan.org',
+                'password' => 'admin1@mafatihuljinan.org',
                 'role' => 'admin',
             ],
             [
                 'name' => 'Admin Two',
-                'email' => 'admin2@example.com',
-                'password' => 'password2',
+                'email' => 'admin2@mafatihuljinan.org',
+                'password' => 'admin2@mafatihuljinan.org',
                 'role' => 'admin',
             ],
             [
@@ -31,7 +37,7 @@ class UserSeeder extends Seeder
                 'email' => 'manishkumar@ibarts.in',
                 'password' => 'manishkumar@ibarts.in',
                 'role' => 'admin',
-            ],
+            ]
         ];
         foreach ($users as $data) {
             $user = User::updateOrCreate(
