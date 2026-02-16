@@ -56,7 +56,7 @@ class UserController extends Controller
             ->groupBy('language');
         // dd($GroupedBookmarkPosts);
 
-        return view('admin.users.details', compact('user', 'GroupedFavorites','GroupedBookmarkPosts'));
+        return view('admin.users.details', compact('user', 'GroupedFavorites', 'GroupedBookmarkPosts'));
     }
 
 
@@ -75,6 +75,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6',
+            'role' => 'required|in:' . implode(',', getAllRoles()),
         ]);
 
         if (Auth::user()->role !== 'admin') {
@@ -88,7 +89,7 @@ class UserController extends Controller
         }
         $user->name = $request->name;
         $user->email = $request->email;
-        // $user->role = $request->role;
+        $user->role = $request->role;
 
         // Update password if provided
         if ($request->filled('password')) {
@@ -112,7 +113,7 @@ class UserController extends Controller
     public function updateRole(Request $request, User $user)
     {
         $request->validate([
-            'role' => 'required|in:editor,subscriber',
+            'role' => 'required|in:' . implode(',', getAllRoles()),
         ]);
 
         $user->role = $request->role;

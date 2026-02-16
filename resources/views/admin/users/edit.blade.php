@@ -3,28 +3,30 @@
 @section('title', 'Edit User')
 
 @section('content')
-<div class="h-screen bg-gray-100 flex items-start">
-    <div class="bg-white rounded-xl shadow-lg w-full p-6 space-y-6">
+<div class="h-screen flex items-start">
+    <div class="bg-white rounded-2xl shadow-lg w-full p-6 space-y-6">
 
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
-            <a href="{{ route('admin.users.show', $user->id) }}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 font-semibold"><i class="fas fa-arrow-left"></i> Back</a>
+            <a href="{{ route('admin.users') }}" class="px-4 py-2 bg-[#034E7A] text-white rounded hover:bg-gray-600"><i class="fas fa-arrow-left"></i> Back</a>
+            <div class="px-1 py-2 font-medium text-gray-800">
+                <a href="{{ route('admin.users.show', $user->id) }}" class="px-4 py-2 bg-[#034E7A] text-white rounded hover:bg-gray-600">
+                    View Details
+                </a>
+            </div>
         </div>
-
         <!-- Edit Form -->
         <form action="{{ route('admin.users.update', $user->id) }}" method="POST" class="space-y-4">
             @csrf
             @method('PUT')
-
             <div class="grid grid-cols-2 gap-6">
-
                 <!-- Name -->
                 <div>
                     <label class="block text-gray-500 font-semibold mb-1" for="name">Name</label>
                     <input type="text" name="name" id="name" value="{{ old('name', $user->name) }}"
-                           class="w-full px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="w-full px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     @error('name')
-                        <span class="text-red-600 text-sm">{{ $message }}</span>
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -32,9 +34,9 @@
                 <div>
                     <label class="block text-gray-500 font-semibold mb-1" for="email">Email</label>
                     <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}"
-                           class="w-full px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="w-full px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     @error('email')
-                        <span class="text-red-600 text-sm">{{ $message }}</span>
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -42,12 +44,20 @@
                 <div>
                     <label class="block text-gray-500 font-semibold mb-1" for="password">Password (leave blank to keep current)</label>
                     <input type="password" name="password" id="password"
-                           class="w-full px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="w-full px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     @error('password')
-                        <span class="text-red-600 text-sm">{{ $message }}</span>
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
+                <div>
+                    <label class="block font-medium mb-1 text-[#034E7A]">Role:</label>
+                    <select name="role" class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#034E7A]" required>
+                        @foreach(getAllRoles() as $role)
+                        <option value="{{ $role }}" {{ $user->role == $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <!-- Email Verified -->
                 <div class="flex items-center mt-6">
                     <input type="checkbox" name="email_verified" id="email_verified" value="1"
@@ -56,7 +66,6 @@
                     <label for="email_verified" class="ml-2 text-gray-700 font-medium">Email Verified</label>
                 </div>
             </div>
-
             <!-- Created / Updated Info -->
             <div class="grid grid-cols-2 gap-6 mt-4">
                 <div>
@@ -71,8 +80,8 @@
 
             <!-- Submit Button -->
             <div class="flex justify-end space-x-2 mt-4">
-                <a href="{{ route('admin.users.show', $user->id) }}" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</a>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Update User</button>
+                <a href="{{ route('admin.users') }}" class="px-4 py-2 bg-[#034E7A] text-white rounded hover:bg-gray-600">Cancel</a>
+                <button type="submit" class="px-4 py-2 bg-[#034E7A] text-white rounded hover:bg-gray-600">Update User</button>
             </div>
 
         </form>

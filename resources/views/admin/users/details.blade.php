@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'View User')
+@section('title', 'User Details')
 
 @section('content')
 <div class="h-screen bg-gray-100 p-4 flex items-start">
@@ -8,19 +8,19 @@
 
         <!-- Header -->
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold text-[#034E7A]">User Details</h2>
-            <a href="{{ route('admin.users') }}" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 font-semibold"><i class="fas fa-arrow-left"></i> Back</a>
+            <a href="{{ route('admin.users') }}" class="px-4 py-2 bg-[#034E7A] text-white rounded hover:bg-gray-600"><i class="fas fa-arrow-left"></i> Back</a>
+
+            <!-- Top Actions -->
+            <div class="flex justify-end space-x-2">
+                <a href="{{ route('admin.users.edit', $user->id) }}" class="px-4 py-2 bg-[#034E7A] text-white rounded hover:bg-gray-600">Edit User</a>
+                <form action="" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete User</button>
+                </form>
+            </div>
         </div>
 
-        <!-- Top Actions -->
-        <div class="flex justify-end space-x-2">
-            <a href="{{ route('admin.users.edit', $user->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Edit User</a>
-            <form action="" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete User</button>
-            </form>
-        </div>
 
         <!-- User Info -->
         <div class="grid grid-cols-2 gap-6 border border-gray-200 rounded p-4 bg-gray-50">

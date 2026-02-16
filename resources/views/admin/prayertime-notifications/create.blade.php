@@ -57,13 +57,13 @@
             <div>
                 <label class="block font-medium mb-1 text-[#034E7A]">Prayer Type</label>
                 <select name="prayer_type" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-[#034E7A]">
-                    <option value="30_min_before_fajr">30 min before Fajr</option>
+                    <option value="30_min_before_fajr">30 Min Before Fajr</option>
                     <option value="fajr" selected>Fajr</option>
                     <option value="sunrise">Sunrise</option>
                     <option value="dhuhr">Dhuhr</option>
                     <option value="sunset">Sunset</option>
                     <option value="maghrib">Maghrib</option>
-                    <option value="30_min_after_maghrib">30 min after Maghrib</option>
+                    <option value="30_min_after_maghrib">30 Min After Maghrib</option>
                 </select>
             </div>
         </div>

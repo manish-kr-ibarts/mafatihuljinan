@@ -3,8 +3,8 @@
 @section('title', 'Users')
 
 @section('content')
-<div class=" bg-gray-100">
-    <div class="w-full max-w-7xl mx-auto bg-white rounded-xl ">
+<div class="border rounded-2xl">
+    <div class="w-full max-w-7xl mx-auto rounded-xl ">
 
         <!-- Header Title -->
         <div class="p-4 border-b border-gray-200">
@@ -30,11 +30,11 @@
         </div>
 
         <!-- Horizontal Scroll Container -->
-        <div class="overflow-x-auto p-4 my-4 border rounded-xl">
+        <div class="overflow-x-auto p-4 m-2 my-4 border rounded-xl">
             <div class="min-w-max">
                 <!-- Table Header -->
                 <!-- Table Header -->
-                <div class="grid grid-cols-[40px_150px_200px_80px_80px_120px_1fr] gap-0 bg-[#034E7A] text-white sticky top-0 z-10 text-xs sm:text-sm">
+                <div class="rounded-xl p-1 grid grid-cols-[40px_150px_200px_80px_80px_120px_1fr] gap-0 bg-[#034E7A] text-white sticky top-0 z-10 text-xs sm:text-sm">
                     <div class="px-1 py-2 font-semibold truncate">#</div>
                     <div class="px-1 py-2 font-semibold truncate">Name</div>
                     <div class="px-1 py-2 font-semibold truncate">Email</div>
@@ -68,7 +68,7 @@
                         <div class="px-1 py-2 text-gray-600 truncate whitespace-nowrap">{{ $user->created_at ? $user->created_at->format('Y-m-d') : '-' }}</div>
                         <div class="px-1 py-2 flex items-center justify-center space-x-1 sm:space-x-2">
                             <a href="{{ route('admin.users.edit', $user->id) }}" class="text-blue-600 px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 transition whitespace-nowrap">Edit</a>
-                            <a href="{{ route('admin.users.edit-role', $user->id) }}" class="text-blue-600 px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 transition whitespace-nowrap">Edit Role</a>
+                            <!-- <a href="{{ route('admin.users.edit-role', $user->id) }}" class="text-blue-600 px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 transition whitespace-nowrap">Edit Role</a> -->
                             <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
                                 @csrf
                                 @method('DELETE')
@@ -82,7 +82,6 @@
                     </div>
                     @endforelse
                 </div>
-
             </div>
         </div>
 
