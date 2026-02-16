@@ -27,6 +27,7 @@ use App\Http\Controllers\Admin\Common\EventPopupController;
 use App\Http\Controllers\Admin\Common\PostSearchController;
 use App\Http\Controllers\Admin\Common\PrayertimeNotificationController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\Admin\Common\ActivityLogController;
 
 use App\Http\Controllers\Admin\Common\AudioFileController;
 use App\Http\Controllers\Admin\Common\NotificationController;
@@ -85,6 +86,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs');
 
         Route::get('/users/{user}/edit-role', [UserController::class, 'editRole'])->name('users.edit-role');
         Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.update-role');

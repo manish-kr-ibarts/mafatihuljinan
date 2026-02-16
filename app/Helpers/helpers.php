@@ -494,3 +494,15 @@ if (!function_exists('getModelByLanguageAndType')) {
         }
     }
 }
+
+if (!function_exists('logActivity')) {
+    function logActivity($user, $action, $description = null)
+    {
+        \App\Models\ActivityLog::create([
+            'user_id' => $user->id,
+            'action' => $action,
+            'description' => $description,
+            'ip_address' => request()->ip(),
+        ]);
+    }
+}

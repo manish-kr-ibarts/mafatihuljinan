@@ -101,6 +101,8 @@ class UserController extends Controller
 
         $user->save();
 
+        logActivity(Auth::user(), 'Update', 'Updated one user : ' . $user->name);
+
         return redirect()->back()->with('success', 'User updated successfully.');
     }
 

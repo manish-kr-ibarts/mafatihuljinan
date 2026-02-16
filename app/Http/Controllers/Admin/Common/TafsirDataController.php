@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Common;
 use App\Http\Controllers\Controller;
 use App\Models\Common\TafsirData;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TafsirDataController extends Controller
 {
@@ -36,7 +37,7 @@ class TafsirDataController extends Controller
         ]);
 
         TafsirData::create($validated);
-
+        logActivity(Auth::user(), 'Create', 'Created one Tafsir : ' . $validated['title']);
         return redirect()->route('admin.tafsir.index')->with('success', 'Tafsir created successfully.');
     }
 
@@ -58,7 +59,7 @@ class TafsirDataController extends Controller
 
         $tafsir = TafsirData::findOrFail($id);
         $tafsir->update($validated);
-
+        logActivity(Auth::user(), 'Update', 'Updated one Tafsir : ' . $validated['title']);
         return redirect()->route('admin.tafsir.index')->with('success', 'Tafsir updated successfully.');
     }
 
@@ -66,7 +67,7 @@ class TafsirDataController extends Controller
     {
         $tafsir = TafsirData::findOrFail($id);
         $tafsir->delete();
-
+        logActivity(Auth::user(), 'Delete', 'Deleted one Tafsir : ' . $tafsir->title);
         return redirect()->route('admin.tafsir.index')->with('success', 'Tafsir deleted successfully.');
     }
 }

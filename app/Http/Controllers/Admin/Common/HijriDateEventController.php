@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Services\HijriDateService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 
 class HijriDateEventController extends Controller
 {
@@ -83,6 +84,7 @@ class HijriDateEventController extends Controller
             ]
         );
         Cache::forget('hijri_events_' . $request->language);
+        logActivity(Auth::user(), 'Create', 'Created one hijri date event : ' . $request->event);
         return redirect()->back()->with('success', 'Event saved successfully!');
     }
 
@@ -124,12 +126,14 @@ class HijriDateEventController extends Controller
             'text_color' => $request->textcolor
         ]);
         Cache::forget('hijri_events_' . $request->language);
+        logActivity(Auth::user(), 'Update', 'Updated one hijri date event : ' . $request->event);
         return redirect()->route('admin.hijri.date.event')->with('success', 'Event updated successfully!');
     }
 
     public function destroy(HijriEvent $hijriEvent)
     {
         $hijriEvent->delete();
+        logActivity(Auth::user(), 'Delete', 'Deleted one hijri date event : ' . $hijriEvent->event);
         return redirect()->route('admin.hijri.date.event')->with('success', 'Event deleted successfully!');
     }
 
@@ -142,6 +146,7 @@ class HijriDateEventController extends Controller
         ]);
         $datediff = $request->input('day-difference');
         Setting::updateOrCreate(['setting_key' => 'hijri_date_diff'], ['setting_value' => $datediff]);
+        logActivity(Auth::user(), 'Update', 'Updated hijri date difference to ' . $datediff);
         return redirect()->back()->with('success', 'Day difference is set to ' . $datediff);
     }
     ////////////////////////////////////////////////////

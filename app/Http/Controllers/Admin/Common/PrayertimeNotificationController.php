@@ -25,6 +25,7 @@ use Kreait\Firebase\Exception\FirebaseException;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Kreait\Firebase\Messaging\AndroidNotification;
 use Kreait\Firebase\Messaging\Aps;
+use Illuminate\Support\Facades\Auth;
 
 class PrayertimeNotificationController extends Controller
 {
@@ -63,7 +64,7 @@ class PrayertimeNotificationController extends Controller
         }
 
         PrayertimeNotiMessage::create($request->all());
-
+        logActivity(Auth::user(), 'Create', 'Created one Prayer time notification : ' . $request->notification_title);
         return redirect()->route('admin.prayertime-notifications.index')
             ->with('success', 'Prayer time notification scheduled successfully.');
     }
@@ -96,7 +97,7 @@ class PrayertimeNotificationController extends Controller
         }
 
         $prayertimeNotification->update($request->all());
-
+        logActivity(Auth::user(), 'Update', 'Updated one Prayer time notification : ' . $request->notification_title);
         return redirect()->route('admin.prayertime-notifications.index')
             ->with('success', 'Prayer time notification updated successfully.');
     }
@@ -104,6 +105,7 @@ class PrayertimeNotificationController extends Controller
     public function destroy(PrayertimeNotiMessage $prayertimeNotification)
     {
         $prayertimeNotification->delete();
+        logActivity(Auth::user(), 'Delete', 'Deleted one Prayer time notification : ' . $prayertimeNotification->notification_title);
         return redirect()->back()->with('success', 'Notification deleted successfully.');
     }
 
@@ -209,7 +211,7 @@ class PrayertimeNotificationController extends Controller
 
 
 
-    // scheduled notification for hinri date
+    // scheduled notification for hijri date
     public function sendScheduledNotification()
     {
         $hijriMonths = [

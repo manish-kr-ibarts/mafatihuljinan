@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use App\Models\Menu;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 
 class MenuController extends Controller
 {
@@ -44,7 +45,7 @@ class MenuController extends Controller
                 'sort_number' => $request->sort_number,
                 'post_type' => $request->post_type
             ]);
-
+            logActivity(Auth::user(), 'Create', 'Created one menu : ' . $request->menu_name);
             return redirect()->route('admin.menus.index')->with('success', 'Menu created successfully!');
         } catch (QueryException $e) {
             // Check if it is a unique constraint violation
@@ -53,6 +54,7 @@ class MenuController extends Controller
                     ->withInput()
                     ->withErrors(['menu_name' => 'This menu name already exists for the selected language.']);
             }
+            logActivity(Auth::user(), 'Error', 'Error while creating menu.');
             throw $e; // Rethrow other exceptions
         }
     }
@@ -84,7 +86,7 @@ class MenuController extends Controller
                 'sort_number' => (int)$request->sort_number,
                 'post_type' => $request->post_type
             ]);
-
+            logActivity(Auth::user(), 'Update', 'Updated one menu : ' . $request->menu_name);
             return redirect()->route('admin.menus.index')->with('success', 'Menu updated successfully!');
         } catch (QueryException $e) {
             // Handle unique constraint violation
@@ -93,7 +95,7 @@ class MenuController extends Controller
                     ->withInput()
                     ->withErrors(['menu_name' => 'This menu name already exists for the selected language.']);
             }
-
+            logActivity(Auth::user(), 'Error', 'Error while updating menu.');
             throw $e; // Rethrow other exceptions
         }
     }
@@ -102,6 +104,7 @@ class MenuController extends Controller
     {
         $menu = Menu::findOrFail($id);
         $menu->delete();
+        logActivity(Auth::user(), 'Delete', 'Deleted one menu : ' . $menu->menu_name);
         return redirect()->back()->with('success', 'Menu deleted successfully!');
     }
 }

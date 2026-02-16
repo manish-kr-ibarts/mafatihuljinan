@@ -16,6 +16,7 @@ use Kreait\Laravel\Firebase\Facades\Firebase; // Use the facade
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Messaging\MulticastSendReport;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 
 class NotificationController extends Controller
@@ -270,7 +271,7 @@ class NotificationController extends Controller
             'is_active'      => $request->boolean('is_active'),
             'last_run_at'    => null,
         ]);
-
+        logActivity(Auth::user(), 'Create', 'Created one notification schedule : ' . $request->title);
         return redirect()->back()->with('success', 'Notification schedule saved successfully.');
     }
 
@@ -328,7 +329,7 @@ class NotificationController extends Controller
 
         //  Update schedule
         $schedule->update($validated);
-
+        logActivity(Auth::user(), 'Update', 'Updated one notification schedule : ' . $request->title);
         return redirect()
             ->route('admin.notifications.schedule.edit', $schedule->id)
             ->with('success', 'Notification schedule updated successfully.');
@@ -337,7 +338,7 @@ class NotificationController extends Controller
     public function destroy(NotificationSchedule $schedule)
     {
         $schedule->delete();
-
+        logActivity(Auth::user(), 'Delete', 'Deleted one notification schedule : ' . $schedule->title);
         return redirect()
             ->route('admin.notifications.schedule.index')
             ->with('success', 'Notification schedule deleted successfully.');
@@ -361,7 +362,7 @@ class NotificationController extends Controller
                 'type' => 'instant',
             ]
         );
-
+        logActivity(Auth::user(), 'Send', 'Sent one instant notification : ' . $request->title);
         return redirect()
             ->back()
             ->with('success', 'Instant notification sent successfully.');

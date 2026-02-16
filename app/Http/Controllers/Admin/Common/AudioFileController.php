@@ -68,7 +68,7 @@ class AudioFileController extends Controller
                 'url' => $url,
                 'user_id' => Auth::id()
             ]);
-
+            logActivity(Auth::user(), 'Create', 'Uploaded audio : ' . $fileName);
             return back()->with('success', 'Audio uploaded and tracked successfully!');
         } catch (\Exception $e) {
             return back()->with('error', 'Error: ' . $e->getMessage());
@@ -89,7 +89,7 @@ class AudioFileController extends Controller
             }
 
             $audioFile->delete();
-
+            logActivity(Auth::user(), 'Delete', 'Deleted audio : ' . $audioFile->file_name);
             return back()->with('success', 'Audio file and record deleted successfully.');
         } catch (\Exception $e) {
             return back()->with('error', 'Error: ' . $e->getMessage());

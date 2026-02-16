@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Setting;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -134,6 +135,7 @@ class DashboardController extends Controller
     {
         $token = Str::random(60);
         Setting::set('api_access_token', $token);
+        logActivity(Auth::user(), 'Update', 'Generated new API token');
         return redirect()->route('admin.dashboard')
             ->with('success', 'API token regenerated successfully.');
     }
@@ -218,6 +220,7 @@ class DashboardController extends Controller
 
             $url = env('AUDIO_WEBURL') . '/' . $request->language . '/' . $fileName;
 
+            logActivity(Auth::user(), 'Create', 'Uploaded audio : ' . $fileName);
             return back()->with([
                 'success' => 'Audio uploaded successfully!',
                 'audio_url' => $url
@@ -241,6 +244,7 @@ class DashboardController extends Controller
 
         if (file_exists($filePath)) {
             unlink($filePath);
+            logActivity(Auth::user(), 'Delete', 'Deleted audio : ' . $fileName);
             return back()->with('success', 'Audio file deleted successfully.');
         } else {
             return back()->with('error', 'File not found.');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Common;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PostSearchController extends Controller
 {
@@ -171,7 +172,7 @@ class PostSearchController extends Controller
                 $updatedCount++;
             }
         }
-
+        logActivity(Auth::user(), 'Replace', 'Replaced one post : ' . $search . ' with ' . $replace);
         return back()->with('success', "Replacement completed in {$updatedCount} posts!");
     }
 }

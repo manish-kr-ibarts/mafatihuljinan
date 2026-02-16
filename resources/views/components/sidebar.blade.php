@@ -909,6 +909,13 @@
                         <i class="fas fa-clock mr-3"></i> Hijri Notification
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('admin.activity-logs') }}"
+                        class="flex items-center px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-gray-100 hover:text-[#034E7A] transition-all duration-200 group
+                      {{ Route::is('admin.activity-logs') ? 'bg-[#034E7A] text-white shadow-md' : '' }}">
+                        <i class="fas fa-history mr-3"></i> Activity Logs
+                    </a>
+                </li>
             </ul>
         </div>
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Common\EventPopup;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class EventPopupController extends Controller
 {
@@ -51,7 +52,7 @@ class EventPopupController extends Controller
         }
 
         $eventPopup->save();
-
+        logActivity(Auth::user(), 'Create', 'Created one event popup : ' . $request->title);
         return redirect()->route('admin.eventpopup')->with('success', 'Event Popup uploaded successfully.');
     }
 
@@ -62,9 +63,8 @@ class EventPopupController extends Controller
             $relativePath = str_replace(asset('storage/') . '/', '', $eventPopup->imgurl);
             Storage::disk('public')->delete($relativePath);
         }
-
         $eventPopup->delete();
-
+        logActivity(Auth::user(), 'Delete', 'Deleted one event popup : ' . $eventPopup->title);
         return redirect()
             ->route('admin.eventpopup')
             ->with('success', 'Event Popup deleted successfully.');
