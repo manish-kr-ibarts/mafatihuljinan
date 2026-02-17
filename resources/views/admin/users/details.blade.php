@@ -108,15 +108,99 @@
             @endif
         </div>
         <!-- Created Notes -->
-        <div class="border-t border-gray-200 pt-4">
+        <div class="border-t border-gray-200 pt-4 pb-4">
             <h3 class="text-xl font-bold text-[#034E7A] mb-2">Created Notes</h3>
-            <ul class="list-disc list-inside text-gray-700 space-y-1">
-                <li>Note 1: Lorem ipsum dolor sit amet.</li>
-                <li>Note 2: Consectetur adipiscing elit.</li>
-                <li>Note 3: Integer nec odio.</li>
-            </ul>
+            @if($GroupedNotes->isEmpty())
+            <p class="text-gray-600">No notes found.</p>
+            @else
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @foreach($GroupedNotes as $language => $notes)
+                <div class="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-200">
+                    <h4 class="text-lg font-semibold text-[#026b9c] border-b border-gray-200 pb-1 mb-2">
+                        {{ ucfirst($language) }}
+                    </h4>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        @foreach($notes as $note)
+                        <li>
+                            <a href="javascript:void(0)"
+                                class="text-blue-600 hover:underline font-medium"
+                                data-title="{{ $note->title }}"
+                                data-content="{{ $note->content }}"
+                                data-language="{{ $note->language }}"
+                                onclick="viewNote(this)">
+                                {{ $note->title }}
+                            </a>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endforeach
+            </div>
+            @endif
         </div>
 
     </div>
 </div>
+
+<!-- Note Details Modal -->
+<div id="noteModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <div>
+                <h3 id="modalTitle" class="text-2xl font-bold text-[#034E7A]">Note Title</h3>
+                <p id="modalLanguage" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+            <button onclick="closeNoteModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <!-- Modal Body -->
+        <div class="p-6">
+            <div id="modalContent" class="text-gray-700 leading-relaxed whitespace-pre-wrap max-h-[60vh] overflow-y-auto pr-2">
+                Note content goes here...
+            </div>
+        </div>
+        <!-- Modal Footer -->
+        <div class="flex justify-end p-6 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+            <button onclick="closeNoteModal()" class="px-6 py-2 bg-[#034E7A] text-white rounded-lg hover:bg-opacity-90 transition-all font-medium">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function viewNote(element) {
+        const title = element.getAttribute('data-title');
+        const content = element.getAttribute('data-content');
+        const language = element.getAttribute('data-language');
+
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalContent').innerText = content || 'No content available.';
+        document.getElementById('modalLanguage').innerText = 'Language: ' + language.charAt(0).toUpperCase() + language.slice(1);
+
+        document.getElementById('noteModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function closeNoteModal() {
+        document.getElementById('noteModal').classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
+
+    // Close on click outside
+    document.getElementById('noteModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closeNoteModal();
+        }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeNoteModal();
+        }
+    });
+</script>
 @endsection

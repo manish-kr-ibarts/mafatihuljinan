@@ -79,7 +79,7 @@ class BackupController extends Controller
 
 
         // 6. Send Email
-        $recipients = ['manishkumar@ibarts.in','devatibarts@gmail.com'];
+        $recipients = ['manishkumar@ibarts.in', 'devatibarts@gmail.com'];
         $emailSent = $this->send_email($sqlPath, $recipients);
 
         // if ($emailSent) {

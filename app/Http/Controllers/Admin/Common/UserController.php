@@ -10,6 +10,8 @@ use App\Models\Common\Favorite;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\Common\UserNotepad;
+
 class UserController extends Controller
 {
     public function index()
@@ -17,6 +19,32 @@ class UserController extends Controller
         $users = User::orderBy('created_at', 'desc')->where('id', '!=', Auth::user()->id)->paginate(2000);
 
         return view('admin.users.index', compact('users'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:' . implode(',', getAllRoles()),
+        ]);
+
+        if (Auth::user()->role !== 'admin') {
+            return redirect()->back()->with('error', 'you do not have permission to create users.');
+        }
+
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = Hash::make($request->password);
+        $user->role = $request->role;
+        $user->email_verified_at = now();
+        $user->save();
+
+        logActivity(Auth::user(), 'Create', 'Created a new user : ' . $user->name . ' ( ID: ' . $user->id . ')');
+
+        return redirect()->route('admin.users')->with('success', 'User created successfully.');
     }
 
     // UserController
@@ -36,7 +64,10 @@ class UserController extends Controller
         // Group by language (only those with post data)
         $GroupedFavorites = $FavoritePosts
             ->filter(fn($fav) => $fav->post) // skip missing posts
-            ->groupBy('language');
+            ->groupBy('language')
+            ->sortBy(function ($items, $language) {
+                return $language === 'english' ? 0 : 1;
+            });
 
         ///
         $BookmarkPosts = Bookmark::where('user_id', $user->id)->get();
@@ -53,10 +84,17 @@ class UserController extends Controller
         // Group by language (only those with post data)
         $GroupedBookmarkPosts = $BookmarkPosts
             ->filter(fn($bookmark) => $bookmark->post) // skip missing posts
-            ->groupBy('language');
-        // dd($GroupedBookmarkPosts);
+            ->groupBy('language')
+            ->sortBy(function ($items, $language) {
+                return $language === 'english' ? 0 : 1;
+            });
 
-        return view('admin.users.details', compact('user', 'GroupedFavorites', 'GroupedBookmarkPosts'));
+        $notes = UserNotepad::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+        $GroupedNotes = $notes->groupBy('language')->sortBy(function ($notes, $language) {
+            return $language === 'english' ? 0 : 1;
+        });
+
+        return view('admin.users.details', compact('user', 'GroupedFavorites', 'GroupedBookmarkPosts', 'GroupedNotes'));
     }
 
 
@@ -127,6 +165,7 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
+        logActivity(Auth::user(), 'Delete', 'Deleted one user : ' . $user->name . ' (ID: ' . $user->id . ')');
         return redirect()->back()->with('success', 'User deleted successfully.');
     }
 }

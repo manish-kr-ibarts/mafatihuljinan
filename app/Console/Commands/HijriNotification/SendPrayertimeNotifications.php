@@ -1,6 +1,5 @@
 <?php
-
-namespace App\Console\Commands;
+namespace App\Console\Commands\HijriNotification;
 
 use Illuminate\Console\Command;
 use App\Http\Controllers\Admin\Common\PrayertimeNotificationController;
