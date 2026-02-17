@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SendBackupMail;
 
 class BackupController extends Controller
 {
@@ -40,19 +42,19 @@ class BackupController extends Controller
 
         // 4. Construct Shell-Safe Command
         $mysqldump = config('database.mysqldump_path', 'mysqldump');
-        
+
         $userArg = escapeshellarg($user);
         $hostArg = escapeshellarg($host);
         $dbArg   = escapeshellarg($db);
         $pathArg = escapeshellarg($sqlPath);
-        
+
         // Handle password (no space after -p)
         $passwordPart = ($pass !== '' && $pass !== null) ? "-p" . escapeshellarg($pass) : "";
-        
+
         // Quote the binary if it has spaces and isn't already quoted
-        $binaryLine = (strpos($mysqldump, ' ') !== false && strpos($mysqldump, '"') === false) 
-                      ? "\"{$mysqldump}\"" 
-                      : $mysqldump;
+        $binaryLine = (strpos($mysqldump, ' ') !== false && strpos($mysqldump, '"') === false)
+            ? "\"{$mysqldump}\""
+            : $mysqldump;
 
         $cmd = "{$binaryLine} --user={$userArg} {$passwordPart} --host={$hostArg} {$dbArg} > {$pathArg} 2>&1";
 
@@ -75,12 +77,39 @@ class BackupController extends Controller
             ], 500);
         }
 
+
+        // 6. Send Email
+        $recipients = ['manishkumar@ibarts.in','devatibarts@gmail.com'];
+        $emailSent = $this->send_email($sqlPath, $recipients);
+
+        // if ($emailSent) {
+        //     File::delete($sqlPath);
+        //     return response()->json([
+        //         'status'  => 'success',
+        //         'message' => 'Database backup emailed and file deleted from server.',
+        //         'file'    => $sqlFile,
+        //     ]);
+        // }
+
         return response()->json([
             'status'  => 'success',
-            'message' => 'Database backup created successfully',
+            'message' => 'Database backup created.',
             'file'    => $sqlFile,
             'url'     => route('admin.backup.download', ['token' => $token, 'file' => $sqlFile])
         ]);
+    }
+
+    private function send_email($path, $recipients)
+    {
+        try {
+            foreach ($recipients as $recipient) {
+                Mail::to($recipient)->send(new SendBackupMail($path));
+            }
+            return true;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Backup Email Failed: ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function download($token, $file)
