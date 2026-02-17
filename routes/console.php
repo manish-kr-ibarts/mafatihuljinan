@@ -26,6 +26,10 @@ Schedule::command('db:backup')
     ->dailyAt('02:00')
     ->withoutOverlapping();
 
-// Schedule::command('db:backup')
+Schedule::command('activitylog:cleanup')
+    ->twiceMonthly(1, 16)
+    ->withoutOverlapping();
+
+// Schedule::command('activitylog:cleanup')
 //     ->everyMinute()
 //     ->withoutOverlapping();
