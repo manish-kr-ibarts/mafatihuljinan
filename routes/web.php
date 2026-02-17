@@ -34,8 +34,7 @@ use App\Http\Controllers\Admin\Common\NotificationController;
 
 Route::get('/send-test-notification', [NotificationController::class, 'sendTestNotification']);
 
-Route::get('/run-db-backup/{token}', [BackupController::class, 'backup']);
-Route::get('/download-db-backup/{token}/{file}', [BackupController::class, 'download'])->name('admin.backup.download');
+// Route::get('/download-db-backup/{file}', [BackupController::class, 'download'])->name('admin.backup.download');
 
 Route::get('/test-firebase-path', function () {
     dd(storage_path('app/firebase/firebase-auth.json'));

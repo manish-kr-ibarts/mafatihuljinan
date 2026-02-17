@@ -25,3 +25,7 @@ Schedule::command('hijri-notification:sync-prayer-times')
 Schedule::command('db:backup')
     ->dailyAt('02:00')
     ->withoutOverlapping();
+
+// Schedule::command('db:backup')
+//     ->everyMinute()
+//     ->withoutOverlapping();

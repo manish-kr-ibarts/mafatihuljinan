@@ -25,17 +25,11 @@ class CreateDBBackup extends Command
      */
     public function handle()
     {
-        $token = config('app.backup_token');
-
-        if (!$token) {
-            $this->error('Backup token not found in config. Please set BACKUP_TOKEN in your .env file.');
-            return 1;
-        }
 
         $this->info('Starting database backup...');
 
         $controller = new \App\Http\Controllers\BackupController();
-        $response = $controller->backup($token);
+        $response = $controller->backup();
 
         $data = json_decode($response->getContent(), true);
 

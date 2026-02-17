@@ -8,14 +8,10 @@ use App\Mail\SendBackupMail;
 
 class BackupController extends Controller
 {
-    public function backup($token)
+    public function backup()
     {
-        // 1. Security check
-        if ($token !== config('app.backup_token')) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
-        }
 
-        // 2. Get DB configuration
+        // 1. Get DB configuration
         $connection = config('database.default');
         $dbConfig = config("database.connections.{$connection}");
 
@@ -28,7 +24,7 @@ class BackupController extends Controller
         $pass = $dbConfig['password'];
         $host = $dbConfig['host'];
 
-        // 3. Prepare paths
+        // 2. Prepare paths
         $date = now()->format('Y-m-d_H-i-s');
         // Use DIRECTORY_SEPARATOR for true OS-agnostic paths
         $dir = storage_path('app' . DIRECTORY_SEPARATOR . 'private' . DIRECTORY_SEPARATOR . 'dbbackup');
@@ -40,7 +36,7 @@ class BackupController extends Controller
         $sqlFile = "db_backup_{$db}_{$date}.sql";
         $sqlPath = $dir . DIRECTORY_SEPARATOR . $sqlFile;
 
-        // 4. Construct Shell-Safe Command
+        // 3. Construct Shell-Safe Command
         $mysqldump = config('database.mysqldump_path', 'mysqldump');
 
         $userArg = escapeshellarg($user);
@@ -58,7 +54,7 @@ class BackupController extends Controller
 
         $cmd = "{$binaryLine} --user={$userArg} {$passwordPart} --host={$hostArg} {$dbArg} > {$pathArg} 2>&1";
 
-        // 5. Execute
+        // 4. Execute
         $output = [];
         $returnVar = null;
         exec($cmd, $output, $returnVar);
@@ -78,7 +74,7 @@ class BackupController extends Controller
         }
 
 
-        // 6. Send Email
+        // 5. Send Email
         $recipients = ['manishkumar@ibarts.in', 'devatibarts@gmail.com'];
         $emailSent = $this->send_email($sqlPath, $recipients);
 
@@ -95,7 +91,7 @@ class BackupController extends Controller
             'status'  => 'success',
             'message' => 'Database backup created.',
             'file'    => $sqlFile,
-            'url'     => route('admin.backup.download', ['token' => $token, 'file' => $sqlFile])
+            'url'     => route('admin.backup.download', ['file' => $sqlFile])
         ]);
     }
 
@@ -112,12 +108,12 @@ class BackupController extends Controller
         }
     }
 
-    public function download($token, $file)
+    public function download($file)
     {
         // Security check
-        if ($token !== config('app.backup_token')) {
-            abort(403);
-        }
+        // if ($token !== config('app.backup_token')) {
+        //     abort(403);
+        // }
 
         // Filename validation
         if (!preg_match('/^[a-zA-Z0-9_\-\.]+$/', $file)) {
